@@ -17,6 +17,7 @@ const exchangeImporter = {
     Logger.info("Exchange import initialized.");
   },
 
+
   /**
    * Fetches a batch of trades from an exchange and stores them in the db
    * @param {integer} fromId - id of trade to start with
@@ -24,11 +25,11 @@ const exchangeImporter = {
    */
   fetchTrades: async function(fromId, pair) {
     try {
-      const batch = await this.exchange.fetchTrades(pair, undefined, undefined, {
+      batch = await this.exchange.fetchTrades(pair, undefined, undefined, {
         fromId,
         limit
       });
-      await this.dataManager.storeTrades(batch);
+      this.dataManager.storeTrades(batch);
       return batch.length;
     } catch (e) {
       if (e instanceof ccxt.RequestTimeout) {
@@ -38,7 +39,7 @@ const exchangeImporter = {
     }
   },
 
-   /**
+  /**
    * Imports all trade data for a pair from an exchange
    * @param {string} pair
    */
@@ -47,10 +48,14 @@ const exchangeImporter = {
       if (pair) {
         pair = pair.toUpperCase();
         //Get the id of the last trade imported and intialize exchange class
-        const lastId = await this.dataManager.getNewestTrade(pair);
-
+        const lastId = this.dataManager.getNewestTrade(pair);
+        if (lastId) {
+          Logger.debug(`trade data detected. Resuming from trade id ${lastId}`);
+        } else {
+          Logger.debug(`trade data not detected, starting from 1`);
+        }
         //This is working under the asusmption that the trade ids begin with 1 for the first and incremented from there
-        //This is true for Binance. When / If trying other exchanges this will need testing and possibly modified
+        //This is true for Binance. When / If trying other exchanges this will need testing and possibly modification
 
         //This is ok for now. Basically we start at the last candle saved in the db plus one. Get a batch of candles.
         //The max binance allows is 1k. Again can look at this when considering multiple exchanges. Hand data to dataManager
@@ -61,10 +66,10 @@ const exchangeImporter = {
         let amt;
         do {
           amt = await this.fetchTrades(fromId, pair);
-          fromId += limit;
-        } while (amt === limit);
+          fromId += 1000;
+        } while (amt === 1000);
 
-        Logger.info(`${fromId - limit + amt - lastId} trades imported`);
+        Logger.info(`${fromId - 1000 + amt - lastId} trades imported`);
       } else {
         throw "Must specify a pair";
       }

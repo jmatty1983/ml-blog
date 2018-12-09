@@ -2,9 +2,6 @@ const db = require('sqlite3');
 
 const Logger = require('../logger/logger');
 
-const dataDir = process.env.DATA_DIR;
-const dbExt = process.env.DB_EXT;
-
 const DataManager = {
   /**
    * Constructor for OLOO style behavior delgation.
@@ -86,3 +83,5 @@ const DataManager = {
     }
   }
 };
+
+module.exports = DataManager;

@@ -63,3 +63,5 @@ const DataManager = {
     }
   }
 };
+
+module.exports = DataManager;
